@@ -1,9 +1,9 @@
 [tool.black]
 skip-string-normalization = true
-line-width = 80
+line-width = 88
 
 [tool.ruff]
-line-length = 80
+line-length = 88
 indent-width = 4
 target-version = "py313"
 

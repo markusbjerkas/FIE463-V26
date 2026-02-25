@@ -1,8 +1,8 @@
 """
 Lecture 6: Consumption & labor supply
 
-This module implements the solution for the general equilibrium economy where 
-    - households choose consumption and labor supply, and 
+This module implements the solution for the general equilibrium economy where
+    - households choose consumption and labor supply, and
     - firms have a Cobb-Douglas production function using capital and labor.
 """
 
@@ -16,12 +16,13 @@ class Parameters:
     """
     Container to store the problem's parameters.
     """
-    alpha: float = 0.36     # Capital share in production function
-    z: float = 1.0          # TFP 
-    gamma: float = 2.0      # Relative risk aversion (RRA) in utility
-    psi: float = 1.0        # Weight on disutility of working
-    theta: float = 0.5      # Frisch elasticity of labor supply
-    a: float = 5.0          # Initial assets (capital)
+
+    alpha: float = 0.36  # Capital share in production function
+    z: float = 1.0  # TFP
+    gamma: float = 2.0  # Relative risk aversion (RRA) in utility
+    psi: float = 1.0  # Weight on disutility of working
+    theta: float = 0.5  # Frisch elasticity of labor supply
+    a: float = 5.0  # Initial assets (capital)
 
 
 @dataclass
@@ -29,14 +30,15 @@ class Equilibrium:
     """
     Container to store equilibrium allocations and prices.
     """
+
     par: Parameters = None  # Parameters used to compute equilibrium
-    c: float = None         # Optimal consumption
-    h: float = None         # Optimal hours
-    r: float = None         # Interest rate
-    w: float = None         # Wage rate
-    L: float = None         # Labor demand
-    K: float = None         # Capital demand
-    Y: float = None         # Output
+    c: float = None  # Optimal consumption
+    h: float = None  # Optimal hours
+    r: float = None  # Interest rate
+    w: float = None  # Wage rate
+    L: float = None  # Labor demand
+    K: float = None  # Capital demand
+    Y: float = None  # Output
 
 
 def util(c, h, par: Parameters):
@@ -65,13 +67,12 @@ def util(c, h, par: Parameters):
         u = np.log(c)
     else:
         # General CRRA utility
-        u = (c**(1-par.gamma) - 1) / (1-par.gamma)
+        u = (c ** (1 - par.gamma) - 1) / (1 - par.gamma)
 
     # add disutility of labor
-    u -= par.psi * h**(1 + 1/par.theta) / (1 + 1/par.theta)
+    u -= par.psi * h ** (1 + 1 / par.theta) / (1 + 1 / par.theta)
 
     return u
-
 
 
 def solve_hh(r, w, par: Parameters):
@@ -89,7 +90,7 @@ def solve_hh(r, w, par: Parameters):
 
     Returns
     -------
-    c_opt : float 
+    c_opt : float
         Optimal consumption choice
     h_opt : float
         Optimal hours choice
@@ -101,10 +102,10 @@ def solve_hh(r, w, par: Parameters):
     # Run minimizer to find optimal hours.
     # The budget constraint is inserted directly in the lambda expression.
     res = minimize(
-        lambda h: -util(r*par.a + w * h, h, par),
+        lambda h: -util(r * par.a + w * h, h, par),
         x0=h_guess,
         method='L-BFGS-B',
-        bounds=((0, None), )
+        bounds=((0, None),),
     )
 
     if not res.success:
@@ -146,17 +147,17 @@ def solve_firm(w, par: Parameters):
     K = par.a
 
     # Labor demand implied by firm FOC
-    L = (w / (1-par.alpha) / par.z)**(-1/par.alpha) * K
+    L = (w / (1 - par.alpha) / par.z) ** (-1 / par.alpha) * K
 
     # Optimal capital-labor ratio
     k = K / L
 
     # Return on capital
-    r = par.z * par.alpha * k**(par.alpha - 1)
+    r = par.z * par.alpha * k ** (par.alpha - 1)
 
     # Output
-    Y = par.z * K**par.alpha * L**(1-par.alpha)
-    
+    Y = par.z * K**par.alpha * L ** (1 - par.alpha)
+
     return L, Y, r
 
 
@@ -173,7 +174,7 @@ def compute_labor_ex_demand(w, par: Parameters):
 
     Returns
     -------
-    ex_demand : float 
+    ex_demand : float
         Excess labor demand (firm demand minus household supply)
     """
 
@@ -204,9 +205,7 @@ def compute_equilibrium(par: Parameters):
         Equilibrium allocation and prices
     """
 
-    res = root_scalar(
-        compute_labor_ex_demand, x0=1, method='newton', args=(par, )
-    )
+    res = root_scalar(compute_labor_ex_demand, x0=1, method='newton', args=(par,))
 
     if not res.converged:
         print('Equilibrium root finder did not terminate successfully')
@@ -241,7 +240,7 @@ def print_equilibrium(eq: Equilibrium):
     print(f'    K = {eq.K:.5f}')
     print('  Prices:')
     print(f'    r = {eq.r:.5f}')
-    print(f'    w = {eq.w:.5f}')    
+    print(f'    w = {eq.w:.5f}')
     print('  Market clearing:')
     print(f'    Labor market: {eq.L - eq.h:.5e}')
     print(f'    Goods market: {eq.c - eq.Y:.5e}')
@@ -263,19 +262,18 @@ def compute_equilibrium_analytical(par: Parameters):
     """
 
     # Base in the analytical formula for L
-    x = (1-par.alpha) * (par.z * par.a**par.alpha)**(1-par.gamma) / par.psi
+    x = (1 - par.alpha) * (par.z * par.a**par.alpha) ** (1 - par.gamma) / par.psi
 
     # Inverse exponent
-    xp = 1/par.theta + par.alpha + par.gamma - par.alpha * par.gamma
+    xp = 1 / par.theta + par.alpha + par.gamma - par.alpha * par.gamma
 
     # Equilibrium labor
-    L = x**(1/xp)
+    L = x ** (1 / xp)
 
     return L
 
 
 if __name__ == '__main__':
-
     # Create parameter instance
     par = Parameters()
 

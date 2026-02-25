@@ -6,7 +6,7 @@
 - [Installing & configuring git on **Windows**](git-install-windows.md)
 - [Installing & configuring git on **macOS**](git-install-macos.md)
 - [Installing Visual Studio Code](vscode-install.md)
-
+- [Installing GitHub Copilot CLI](github-copilot.md)
 
 ## Command reference
 
