@@ -279,7 +279,7 @@ if __name__ == '__main__':
     # Create parameter instance
     par = Parameters()
 
-    # Solve for the equilibrium numerically
+    # Solve for the equilibrium numerically|
     eq = compute_equilibrium(par)
 
     print_equilibrium(eq)
