@@ -4,7 +4,7 @@ Template for workshop 6, exercise 1
 
 from dataclasses import dataclass
 import numpy as np
-
+from scipy.optimize import minimize, root_scalar
 
 @dataclass
 class Parameters:
@@ -13,7 +13,13 @@ class Parameters:
     """
 
     # TODO: add model parameters
-
+    alpha: float = 0.36 
+    z: float = 1.0
+    gamma: float = 2.0
+    psi: float = 1.0
+    theta: float = 0.5
+    N1: float = 5.0
+    N2: float = 5.0
 
 
 @dataclass
@@ -87,10 +93,35 @@ def solve_hh(w, pi, par: Parameters):
 
     # TODO:
     # 1. call minimizer to find the optimal hours choice
+
+    #Setting initial guess for h:
+
+    h_guess = 0.5
+    
+    #Setting the bounds
+    bounds = ((0,None), )
+
+    res = minimize(
+        lambda h: -util(w*h+pi, h, par),
+        x0=h_guess,
+        method='L-BFGS-B',
+        bounds=((0, None),),
+    )
+    if not res.success:
+        print('Minimizer did not terminate successfully')
+
+
+    #Compute optimal h :
+    h_opt = res.x
+
+    #Recovering optimal h from budget constraint:
+    c_opt = w*h_opt + pi
+
+    #Optimizing over hours will give 
+    return (c_opt, h_opt)
     # 2. compute optimal consumption from budget constraint
     # 3. return optimal consumption and labor supply
-
-
+    
 def solve_firm(w, par: Parameters):
     """
     Compute labor demand and profits implied by firm's first-order condition
@@ -119,6 +150,14 @@ def solve_firm(w, par: Parameters):
     # 3. compute profits Pi
     # 4. return labor demand, output, and profits
 
+    L = ((1 - par.alpha) * par.z/w) ** (1/par.alpha)
+    
+    Y = par.z * L ** (1 - par.alpha)
+    
+    Pi = Y - w * L
+    #Return parameters:
+    return L, Y, Pi
+
 
 def compute_labor_ex_demand(w, par: Parameters):
     """
@@ -139,10 +178,18 @@ def compute_labor_ex_demand(w, par: Parameters):
 
     # TODO:
     # 1. compute labor demand, output, and profits using solve_firm()
-    # 2. compute optimal consumption and labor supply using solve_hh()
-    # 3. compute excess demand for labor
-    # 4. return excess demand
 
+    L, Y, Pi = solve_firm(w, par=par)
+
+    # 2. compute optimal consumption and labor supply using solve_hh()
+
+    c_opt, h_opt = solve_hh(w, pi=Pi, par=par)
+    # 3. compute excess demand for labor
+
+    excess_demand = L-h_opt
+
+    # 4. return excess demand
+    return excess_demand
 
 def compute_equilibrium(par):
     """
@@ -161,9 +208,21 @@ def compute_equilibrium(par):
 
     # TODO:
     # 1. call root-finder to find equilibrium wage
+    res = root_scalar(compute_labor_ex_demand, x0=0.5, method='newton', args=(par,))
+    
+
+    eq = Equilibrium()
+    eq.par = par
+    
+    #Storing optimal w:
+    w_eq  = res.root
+    eq.w = w_eq
     # 2. compute and store equilibrium values from firm problem
+    eq.L, eq.Y, eq.Pi = solve_firm(w_eq, par=par)
     # 3. compute and store equilibrium values from household problem
+    eq.c, eq.h = solve_hh(eq.w, eq.Pi, eq.par)
     # 4. return Equilibrium instance
+    return eq
 
 
 def print_equilibrium(eq: Equilibrium):

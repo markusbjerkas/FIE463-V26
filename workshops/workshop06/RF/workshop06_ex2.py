@@ -4,7 +4,7 @@ Template for workshop 6, exercise 2
 
 from dataclasses import dataclass
 from workshop06_ex1 import solve_firm, solve_hh
-
+from scipy.optimize import root_scalar
 
 @dataclass
 class Parameters:
@@ -13,7 +13,13 @@ class Parameters:
     """
 
     # TODO: Add model parameters
-
+    alpha: float = 0.36 
+    z: float = 1.0
+    gamma: float = 2.0
+    psi: float = 1.0
+    theta: float = 0.5
+    N1: float = 5.0
+    N2: float = 5.0
 
 @dataclass
 class Equilibrium:
@@ -52,9 +58,17 @@ def compute_labor_ex_demand(w, par: Parameters):
 
     # TODO:
     # 1. compute labor demand, output, and profits using solve_firm()
+
+    L, Y, Pi = solve_firm(w, par)
     # 2. compute optimal consumption and labor supply using solve_hh()
+
+    c1_opt, h1_opt = solve_hh(w, pi=0, par=par) #For c1 consumption does not depend on profit
+    c2_opt, h2_opt = solve_hh(w, pi=Pi, par=par)
+    
     # 3. compute excess demand for labor
+    excess_demand = L - par.N1 * h1_opt - par.N2 * h2_opt
     # 4. return excess demand
+    return excess_demand
 
 
 def compute_equilibrium(par):
@@ -74,11 +88,28 @@ def compute_equilibrium(par):
 
     # TODO:
     # 1. call root-finder to find equilibrium wage
-    # 2. compute and store equilibrium values from firm problem
-    # 3. compute and store equilibrium values from type-1 household problem
-    # 4. compute and store equilibrium values from type-2 household problem
-    # 5. return Equilibrium instance
 
+    res = root_scalar(compute_labor_ex_demand, x0=0.01, method='newton', args=(par,))
+
+    eq = Equilibrium()
+
+    w_eq = res.root
+    eq.w = w_eq
+
+    # 2. compute and store equilibrium values from firm problem
+
+    eq.L, eq.Y, eq.Pi = solve_firm(w_eq, par)
+
+    # 3. compute and store equilibrium values from type-1 household problem
+
+    eq.c1, eq.h1 = solve_hh(w_eq, pi=0, par=par)
+
+    # 4. compute and store equilibrium values from type-2 household problem
+    eq.c2, eq.h2 = solve_hh(w_eq, pi=eq.Pi, par=par)
+
+    # 5. return Equilibrium instance
+    eq.par = par
+    return eq
 
 def print_equilibrium(eq: Equilibrium):
     """
