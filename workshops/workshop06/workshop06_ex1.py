@@ -15,7 +15,6 @@ class Parameters:
     # TODO: add model parameters
 
 
-
 @dataclass
 class Equilibrium:
     """
